@@ -24,14 +24,14 @@ jobs:
 
     - name: Create keystore
       run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android-app/keystore.jks
+        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android-app/app/keystore.jks
 
     - name: Create keystore properties
       run: |
         echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android-app/keystore.properties
         echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android-app/keystore.properties
         echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android-app/keystore.properties
-        echo "storeFile=../keystore.jks" >> android-app/keystore.properties
+        echo "storeFile=keystore.jks" >> android-app/keystore.properties
 
     - name: Setup Gradle
       run: |
@@ -48,6 +48,35 @@ jobs:
         echo "android.useAndroidX=true" > android-app/gradle.properties
         echo "android.enableJetifier=true" >> android-app/gradle.properties
         echo "org.gradle.jvmargs=-Xmx2048m" >> android-app/gradle.properties
+
+    - name: Create default icons
+      run: |
+        # Créer les dossiers
+        mkdir -p android-app/app/src/main/res/mipmap-hdpi
+        mkdir -p android-app/app/src/main/res/mipmap-mdpi
+        mkdir -p android-app/app/src/main/res/mipmap-xhdpi
+        mkdir -p android-app/app/src/main/res/mipmap-xxhdpi
+        mkdir -p android-app/app/src/main/res/mipmap-xxxhdpi
+        mkdir -p android-app/app/src/main/res/mipmap-anydpi-v26
+        mkdir -p android-app/app/src/main/res/drawable
+        
+        # Créer les icônes PNG simples (via une image base64)
+        # Icône 48x48 (mdpi)
+        echo "iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAABBUlEQVR4nO2Z0Q6DIAxF+f+fZpIlTkGqBcS2rH1fV5fYC0eI2uFwOBwOh8PhcDgcDofD4XA4HA6Hw+FwOBwOh8PhcDgc/w2mJxEBVSVJEwEAgIiYGgEAmBpRVbNGpKpEjQAAgKqaNyJVJW4EAEBEokYAAETErBEAYNaIqJI0AgAwNaKqZo1IVYkbAQAAEakaAQAQEbNGAIBZI6JK0ggAwNSIqpo1IlUlbgQAAESkagQAQETMGgEAZo2IKkkjAABTI6pq1ohUlbgRAAAQkaoRAABE5JhGpmn6PM/zPM+f53me5/ndj9d6P89zWZb3+zzPZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZT8H8AXj/y8xH0nXWQAAAABJRU5ErkJggg==" | base64 -d > android-app/app/src/main/res/mipmap-mdpi/ic_launcher.png
+        echo "iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAABBUlEQVR4nO2Z0Q6DIAxF+f+fZpIlTkGqBcS2rH1fV5fYC0eI2uFwOBwOh8PhcDgcDofD4XA4HA6Hw+FwOBwOh8PhcDwG8xMRQFVJ0kQAACIipkYAAKZGVDVrRKpK1AgAAICqmjciVSVuBAAAiEjUCAAAgIhEjQAAzBoRVZJGAACmRlTVrBGpKnEjAACAiFSNAAAARMSsEQAAmDYiqiSNAABMjaiqWSNq2AgAACBSNQIAAETE1AgAwLQRUSVpBABgakRVzRpp2AgAACBSNQIAAETErBEAgGkjokrSCADA1IiqmjXyH0bSNH2e53me53me53meH/14rffzPJdleb/P81yWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmWZVmW/VsHX9n3L8dW2vzEAAAAAElFTkSuQmCC" | base64 -d > android-app/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
+        
+        # Copier pour les autres résolutions (simple agrandissement)
+        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher.png android-app/app/src/main/res/mipmap-hdpi/ic_launcher.png
+        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher.png android-app/app/src/main/res/mipmap-xhdpi/ic_launcher.png
+        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher.png android-app/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
+        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher.png android-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
+        
+        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher_round.png android-app/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
+        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher_round.png android-app/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
+        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher_round.png android-app/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
+        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher_round.png android-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
+        
+        echo "✅ Icônes créées"
 
     - name: Build APK
       working-directory: ./android-app
