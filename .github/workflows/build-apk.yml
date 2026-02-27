@@ -56,20 +56,18 @@ jobs:
           echo "Warning: No keystore found, build will be unsigned"
         fi
 
-    - name: Create keystore properties (Release only)
-      if: github.event.inputs.release_type == 'release' || github.ref == 'refs/heads/main'
-      run: |
-        if [ -n "${{ secrets.KEYSTORE_PASSWORD }}" ]; then
-          cat > android-app/keystore.properties << EOF
-          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          storeFile=keystore.jks
-          EOF
-          echo "Keystore properties created"
-        else
-          echo "Warning: No keystore password found"
-        fi
+  - name: Create keystore properties (Release only)
+  if: github.event.inputs.release_type == 'release' || github.ref == 'refs/heads/main'
+  run: |
+    if [ -n "${{ secrets.KEYSTORE_PASSWORD }}" ]; then
+      echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android-app/keystore.properties
+      echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android-app/keystore.properties
+      echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android-app/keystore.properties
+      echo "storeFile=keystore.jks" >> android-app/keystore.properties
+      echo "Keystore properties created"
+    else
+      echo "Warning: No keystore password found"
+    fi
 
     - name: Setup Gradle wrapper
       run: |
