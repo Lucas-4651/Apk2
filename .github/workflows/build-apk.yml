@@ -92,9 +92,19 @@ jobs:
 </LinearLayout>
 EOF
 
-        # Couleurs
-        cat >> android-app/app/src/main/res/values/colors.xml << "EOF"
+        # Couleurs - créer un nouveau fichier colors.xml
+        cat > android-app/app/src/main/res/values/colors.xml << "EOF"
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
     <color name="splash_background">#6200EE</color>
+</resources>
 EOF
 
         # 2. CRÉER LA SPLASH ACTIVITY
@@ -168,10 +178,6 @@ class MainActivity : AppCompatActivity() {
 EOF
 
         # 4. METTRE À JOUR L'ANDROIDMANIFEST
-        # Sauvegarder d'abord le manifest original
-        cp android-app/app/src/main/AndroidManifest.xml android-app/app/src/main/AndroidManifest.xml.bak
-        
-        # Remplacer le contenu
         cat > android-app/app/src/main/AndroidManifest.xml << "EOF"
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
