@@ -1,0 +1,22 @@
+# Keystore files
+*.jks
+*.properties
+keystore*
+config/
+
+# Android
+android-app/.idea/
+android-app/.gradle/
+android-app/local.properties
+android-app/*.iml
+android-app/app/*.iml
+android-app/app/build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated
+*.apk
+*.txt
+!README.md
