@@ -3,7 +3,18 @@ name: Build Android APK
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Type de build'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
 
 jobs:
   build:
@@ -11,10 +22,12 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -22,20 +35,43 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Create keystore
-      run: |
-        echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android-app/keystore.jks
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          android-app/.gradle
+        key: ${{ runner.os }}-gradle-${{ hashFiles('android-app/**/*.gradle*', 'android-app/**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
 
-    - name: Create keystore properties
+    - name: Create keystore (Release only)
+      if: github.event.inputs.release_type == 'release' || github.ref == 'refs/heads/main'
       run: |
-        cat > android-app/keystore.properties << EOL
-        storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-        keyPassword=${{ secrets.KEY_PASSWORD }}
-        keyAlias=${{ secrets.KEY_ALIAS }}
-        storeFile=keystore.jks
-        EOL
+        if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android-app/keystore.jks
+          echo "Keystore created successfully"
+        else
+          echo "Warning: No keystore found, build will be unsigned"
+        fi
 
-    - name: Setup Gradle
+    - name: Create keystore properties (Release only)
+      if: github.event.inputs.release_type == 'release' || github.ref == 'refs/heads/main'
+      run: |
+        if [ -n "${{ secrets.KEYSTORE_PASSWORD }}" ]; then
+          cat > android-app/keystore.properties << EOF
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=keystore.jks
+          EOF
+          echo "Keystore properties created"
+        else
+          echo "Warning: No keystore password found"
+        fi
+
+    - name: Setup Gradle wrapper
       run: |
         mkdir -p android-app/gradle/wrapper
         cat > android-app/gradle/wrapper/gradle-wrapper.properties << 'EOF'
@@ -46,15 +82,48 @@ jobs:
         zipStorePath=wrapper/dists
         EOF
         chmod +x android-app/gradlew
- 
+
+    - name: Create gradle.properties
+      run: |
+        cat > android-app/gradle.properties << 'EOF'
+        # AndroidX configuration
+        android.useAndroidX=true
+        android.enableJetifier=true
+        
+        # Kotlin configuration
+        kotlin.code.style=official
+        
+        # Gradle configuration
+        org.gradle.jvmargs=-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError
+        org.gradle.parallel=true
+        org.gradle.daemon=true
+        org.gradle.caching=true
+        
+        # Build cache
+        android.buildCache.enabled=true
+        
+        # Compile options
+        android.defaults.buildfeatures.buildconfig=true
+        android.nonTransitiveRClass=false
+        EOF
+
+    - name: Create local.properties
+      run: |
+        echo "sdk.dir=/usr/local/lib/android/sdk" > android-app/local.properties
 
     - name: Build APK
       working-directory: ./android-app
       run: |
-        chmod +x gradlew
-        ./gradlew assembleRelease
+        if [ "${{ github.event.inputs.release_type }}" == "release" ] || [ "${{ github.ref }}" == "refs/heads/main" ]; then
+          echo "Building RELEASE APK"
+          ./gradlew assembleRelease --stacktrace
+        else
+          echo "Building DEBUG APK"
+          ./gradlew assembleDebug --stacktrace
+        fi
 
-    - name: Sign APK
+    - name: Sign APK (Release only)
+      if: (github.event.inputs.release_type == 'release' || github.ref == 'refs/heads/main') && success()
       uses: r0adkll/sign-android-release@v1
       with:
         releaseDirectory: android-app/app/build/outputs/apk/release
@@ -62,9 +131,59 @@ jobs:
         alias: ${{ secrets.KEY_ALIAS }}
         keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
         keyPassword: ${{ secrets.KEY_PASSWORD }}
+      continue-on-error: true
 
-    - name: Upload APK
+    - name: Get APK version
+      id: apk_version
+      working-directory: ./android-app
+      run: |
+        if [ -f "app/build/outputs/apk/release/app-release.apk" ]; then
+          echo "version=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
+        elif [ -f "app/build/outputs/apk/debug/app-debug.apk" ]; then
+          echo "version=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: app-release
-        path: android-app/app/build/outputs/apk/release/*.apk
+        name: VirtualMG-${{ steps.apk_version.outputs.version }}
+        path: |
+          android-app/app/build/outputs/apk/release/*.apk
+          android-app/app/build/outputs/apk/debug/*.apk
+        if-no-files-found: warn
+        retention-days: 30
+
+    - name: Generate build report
+      if: always()
+      run: |
+        echo "## Build Summary" > build_report.md
+        echo "### Build Information" >> build_report.md
+        echo "- **Repository**: ${{ github.repository }}" >> build_report.md
+        echo "- **Branch**: ${{ github.ref_name }}" >> build_report.md
+        echo "- **Commit**: ${{ github.sha }}" >> build_report.md
+        echo "- **Build Type**: ${{ github.event.inputs.release_type || 'release' }}" >> build_report.md
+        echo "- **Build Date**: $(date)" >> build_report.md
+        echo "- **Status**: ${{ job.status }}" >> build_report.md
+        echo "" >> build_report.md
+        echo "### APK Files" >> build_report.md
+        if [ -f "android-app/app/build/outputs/apk/release/app-release.apk" ]; then
+          echo "- ✅ **Release APK**: app-release.apk" >> build_report.md
+        fi
+        if [ -f "android-app/app/build/outputs/apk/debug/app-debug.apk" ]; then
+          echo "- ✅ **Debug APK**: app-debug.apk" >> build_report.md
+        fi
+
+    - name: Upload build report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-report
+        path: build_report.md
+        retention-days: 7
+
+    - name: Cleanup Gradle Cache
+      if: always()
+      run: |
+        rm -f android-app/gradle-wrapper.jar
+        rm -f android-app/keystore.jks
+        rm -f android-app/keystore.properties
