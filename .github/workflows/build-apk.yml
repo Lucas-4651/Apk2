@@ -49,198 +49,155 @@ jobs:
         echo "android.enableJetifier=true" >> android-app/gradle.properties
         echo "org.gradle.jvmargs=-Xmx2048m" >> android-app/gradle.properties
 
-    - name: Add splash screen and fix localStorage
+    - name: Create Splash Screen files
       run: |
-        # 1. CRÉER LE SPLASH SCREEN
-        mkdir -p android-app/app/src/main/res/drawable
-        mkdir -p android-app/app/src/main/res/values
+        # Créer les dossiers
         mkdir -p android-app/app/src/main/res/layout
+        mkdir -p android-app/app/src/main/res/values
+        mkdir -p android-app/app/src/main/java/com/virtual/mg
         
-        # Layout du splash screen
-        cat > android-app/app/src/main/res/layout/activity_splash.xml << "EOF"
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#6200EE"
-    android:orientation="vertical"
-    android:gravity="center">
-    
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="VirtualMG"
-        android:textColor="#FFFFFF"
-        android:textSize="32sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="20dp"/>
-    
-    <ProgressBar
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:indeterminate="true"
-        android:indeterminateTint="#FFFFFF"/>
-    
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Chargement..."
-        android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:layout_marginTop="20dp"/>
+        # 1. Fichier layout splash
+        echo '<?xml version="1.0" encoding="utf-8"?>' > android-app/app/src/main/res/layout/activity_splash.xml
+        echo '<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '    android:layout_width="match_parent"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '    android:layout_height="match_parent"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '    android:background="#6200EE"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '    android:orientation="vertical"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '    android:gravity="center">' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '    ' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '    <TextView' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:layout_width="wrap_content"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:layout_height="wrap_content"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:text="VirtualMG"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:textColor="#FFFFFF"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:textSize="32sp"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:textStyle="bold"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:layout_marginBottom="20dp"/>' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '    ' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '    <ProgressBar' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:layout_width="50dp"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:layout_height="50dp"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:indeterminate="true"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:indeterminateTint="#FFFFFF"/>' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '    ' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '    <TextView' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:layout_width="wrap_content"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:layout_height="wrap_content"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:text="Chargement..."' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:textColor="#FFFFFF"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:textSize="16sp"' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        android:layout_marginTop="20dp"/>' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '        ' >> android-app/app/src/main/res/layout/activity_splash.xml
+        echo '</LinearLayout>' >> android-app/app/src/main/res/layout/activity_splash.xml
         
-</LinearLayout>
-EOF
-
-        # Couleurs - créer un nouveau fichier colors.xml
-        cat > android-app/app/src/main/res/values/colors.xml << "EOF"
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="splash_background">#6200EE</color>
-</resources>
-EOF
-
-        # 2. CRÉER LA SPLASH ACTIVITY
-        cat > android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt << "EOF"
-package com.virtual.mg
-
-import android.content.Intent
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import androidx.appcompat.app.AppCompatActivity
-
-class SplashActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_splash)
+        # 2. Fichier colors.xml
+        echo '<?xml version="1.0" encoding="utf-8"?>' > android-app/app/src/main/res/values/colors.xml
+        echo '<resources>' >> android-app/app/src/main/res/values/colors.xml
+        echo '    <color name="purple_200">#FFBB86FC</color>' >> android-app/app/src/main/res/values/colors.xml
+        echo '    <color name="purple_500">#FF6200EE</color>' >> android-app/app/src/main/res/values/colors.xml
+        echo '    <color name="splash_background">#6200EE</color>' >> android-app/app/src/main/res/values/colors.xml
+        echo '</resources>' >> android-app/app/src/main/res/values/colors.xml
         
-        // Afficher le splash pendant 2 secondes puis lancer MainActivity
-        Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
-        }, 2000) // 2 secondes
-    }
-}
-EOF
-
-        # 3. METTRE À JOUR LE MAINACTIVITY (avec localStorage fix)
-        cat > android-app/app/src/main/java/com/virtual/mg/MainActivity.kt << "EOF"
-package com.virtual.mg
-
-import android.os.Bundle
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.webkit.WebSettings
-import androidx.appcompat.app.AppCompatActivity
-
-class MainActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        # 3. SplashActivity.kt
+        echo 'package com.virtual.mg' > android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo '' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo 'import android.content.Intent' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo 'import android.os.Bundle' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo 'import android.os.Handler' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo 'import android.os.Looper' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo 'import androidx.appcompat.app.AppCompatActivity' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo '' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo 'class SplashActivity : AppCompatActivity() {' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo '    override fun onCreate(savedInstanceState: Bundle?) {' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo '        super.onCreate(savedInstanceState)' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo '        setContentView(R.layout.activity_splash)' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo '        ' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo '        Handler(Looper.getMainLooper()).postDelayed({' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo '            startActivity(Intent(this, MainActivity::class.java))' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo '            finish()' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo '        }, 2000)' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo '    }' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
+        echo '}' >> android-app/app/src/main/java/com/virtual/mg/SplashActivity.kt
         
-        val webView = WebView(this)
+        # 4. MainActivity.kt avec localStorage
+        echo 'package com.virtual.mg' > android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo 'import android.os.Bundle' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo 'import android.webkit.WebView' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo 'import android.webkit.WebViewClient' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo 'import android.webkit.WebSettings' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo 'import androidx.appcompat.app.AppCompatActivity' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo 'class MainActivity : AppCompatActivity() {' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '    override fun onCreate(savedInstanceState: Bundle?) {' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        super.onCreate(savedInstanceState)' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        ' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        val webView = WebView(this)' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        ' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        webView.settings.javaScriptEnabled = true' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        webView.settings.domStorageEnabled = true' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        webView.settings.databaseEnabled = true' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        webView.settings.cacheMode = WebSettings.LOAD_DEFAULT' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        webView.settings.loadWithOverviewMode = true' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        webView.settings.useWideViewPort = true' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        ' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        webView.webViewClient = WebViewClient()' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        webView.loadUrl("https://pred46.onrender.com")' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        ' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        setContentView(webView)' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '    }' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '    ' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '    override fun onBackPressed() {' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        val webView = findViewById<WebView>(android.R.id.content).getRootView() as? WebView' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        if (webView?.canGoBack() == true) {' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '            webView.goBack()' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        } else {' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '            super.onBackPressed()' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '        }' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '    }' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
+        echo '}' >> android-app/app/src/main/java/com/virtual/mg/MainActivity.kt
         
-        // Configuration complète pour une WebView fonctionnelle
-        webView.settings.javaScriptEnabled = true
-        webView.settings.domStorageEnabled = true  // Active localStorage
-        webView.settings.databaseEnabled = true     // Active IndexedDB
-        webView.settings.cacheMode = WebSettings.LOAD_DEFAULT
-        webView.settings.loadWithOverviewMode = true
-        webView.settings.useWideViewPort = true
-        webView.settings.builtInZoomControls = true
-        webView.settings.displayZoomControls = false
-        webView.settings.setSupportZoom(true)
-        webView.settings.allowFileAccess = true
-        webView.settings.allowContentAccess = true
-        
-        webView.webViewClient = WebViewClient()
-        webView.loadUrl("https://pred46.onrender.com")
-        
-        setContentView(webView)
-    }
-    
-    override fun onBackPressed() {
-        val webView = findViewById<WebView>(android.R.id.content).getRootView() as? WebView
-        if (webView?.canGoBack() == true) {
-            webView.goBack()
-        } else {
-            super.onBackPressed()
-        }
-    }
-}
-EOF
-
-        # 4. METTRE À JOUR L'ANDROIDMANIFEST
-        cat > android-app/app/src/main/AndroidManifest.xml << "EOF"
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.virtual.mg">
-    
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    
-    <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.MyApp"
-        android:usesCleartextTraffic="true">
-        
-        <!-- Splash Activity (premier écran) -->
-        <activity
-            android:name=".SplashActivity"
-            android:exported="true"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        
-        <!-- Main Activity (WebView) -->
-        <activity
-            android:name=".MainActivity"
-            android:exported="false"
-            android:configChanges="orientation|screenSize|keyboardHidden">
-        </activity>
-        
-    </application>
-</manifest>
-EOF
+        # 5. AndroidManifest.xml
+        echo '<?xml version="1.0" encoding="utf-8"?>' > android-app/app/src/main/AndroidManifest.xml
+        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android"' >> android-app/app/src/main/AndroidManifest.xml
+        echo '    package="com.virtual.mg">' >> android-app/app/src/main/AndroidManifest.xml
+        echo '    ' >> android-app/app/src/main/AndroidManifest.xml
+        echo '    <uses-permission android:name="android.permission.INTERNET" />' >> android-app/app/src/main/AndroidManifest.xml
+        echo '    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />' >> android-app/app/src/main/AndroidManifest.xml
+        echo '    ' >> android-app/app/src/main/AndroidManifest.xml
+        echo '    <application' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        android:allowBackup="true"' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        android:icon="@mipmap/ic_launcher"' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        android:roundIcon="@mipmap/ic_launcher_round"' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        android:label="VirtualMG"' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        android:supportsRtl="true"' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        android:theme="@style/Theme.MyApp"' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        android:usesCleartextTraffic="true">' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        ' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        <activity' >> android-app/app/src/main/AndroidManifest.xml
+        echo '            android:name=".SplashActivity"' >> android-app/app/src/main/AndroidManifest.xml
+        echo '            android:exported="true"' >> android-app/app/src/main/AndroidManifest.xml
+        echo '            android:theme="@style/Theme.AppCompat.Light.NoActionBar">' >> android-app/app/src/main/AndroidManifest.xml
+        echo '            <intent-filter>' >> android-app/app/src/main/AndroidManifest.xml
+        echo '                <action android:name="android.intent.action.MAIN" />' >> android-app/app/src/main/AndroidManifest.xml
+        echo '                <category android:name="android.intent.category.LAUNCHER" />' >> android-app/app/src/main/AndroidManifest.xml
+        echo '            </intent-filter>' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        </activity>' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        ' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        <activity' >> android-app/app/src/main/AndroidManifest.xml
+        echo '            android:name=".MainActivity"' >> android-app/app/src/main/AndroidManifest.xml
+        echo '            android:exported="false"' >> android-app/app/src/main/AndroidManifest.xml
+        echo '            android:configChanges="orientation|screenSize|keyboardHidden">' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        </activity>' >> android-app/app/src/main/AndroidManifest.xml
+        echo '        ' >> android-app/app/src/main/AndroidManifest.xml
+        echo '    </application>' >> android-app/app/src/main/AndroidManifest.xml
+        echo '</manifest>' >> android-app/app/src/main/AndroidManifest.xml
 
     - name: Add app icon
       run: |
-        # Créer les dossiers d'icônes
-        mkdir -p android-app/app/src/main/res/mipmap-hdpi
         mkdir -p android-app/app/src/main/res/mipmap-mdpi
-        mkdir -p android-app/app/src/main/res/mipmap-xhdpi
-        mkdir -p android-app/app/src/main/res/mipmap-xxhdpi
-        mkdir -p android-app/app/src/main/res/mipmap-xxxhdpi
-        
-        # Créer une icône simple (lettre V)
         echo "iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAAAXNSR0IArs4c6QAAAiVJREFUWEftlz9oFEEUh7/dS9CgaBBiY6EgKNpY2AkWwk5B0E4LBW0sRawE0SJNQBHEwk6w0E7QRgIbJY2FjYVgYadBQT2jYLh/884ddpeb3Z2d2c0GPMrdvHnzfm/efH+2wIr/sQT+WwIrAq0I9D8lYAWUf9hKQAOhPmQtART+Zyu+gfEPlEBfQn2A+gcqf+MU6BPoA9Q/UPkb9wVqBdQHqH+g8jfuA9QKqA9Q/0Dlb9wVqBVQH6D+gcrfuCtQK6A+QP0Dlb9xR6BWQH2A+gcqf+OOQK2A+gD1D1T+xh2BWgH1AeofqPyNOwK1AuoD1D9Q+Ru3AmoF1Aeof6DyN24F1AqoD1D/QOVv3AqoFVAfoP6Byt+4FVBroD5A/QOVv3FroDVQH6D+gcrfuDXQGqgPUP9A5W/cGmgN1Aeof6DyN24NtAbqA9Q/UPkbtwZaA/UB6h+o/I1bA62B+gD1D1T+xq2B1kB9gPoHKn/j1kBzoD5A/QOVv3FzoDlQH6D+gcrfuDnQHKgPUP9A5W/cHGgO1Aeof6DyN24ONAfqA9Q/UPkbNweaA/UB6h+o/I2bA82B+gD1D1T+xs2B5kB9gPoHKn/j5kBzoD5A/QOVv3FzoDlQH6D+gcrfuDnQHKgPUP9A5W/cHMgC6gPUP1D5G7eAsgD6APUPVP7GLaAsgD5A/QOVv3ELKAukD1D/QOVv3ALKAukD1D9Q+Ru3gBoD+gD1D1T+xo2hxoA+QP0Dlb9xY6gxoA9Q/0Dlb9wYagzoA9Q/UPkbN4YaA/oA9Q9U/saNocZAfYD6Byp/48ZQY6A+QP0Dlb9xY6gx0D+B+g9U/sYtUGOgPkD9A5W/cQvUGOgPUP9A5W88A2oM9Aeo/w+oP1D5G8+AGgP9AeoPVP7GM6DGQH+A+gOVv/EMqDHQH6D+QOVvPANqDPQHqD9Q+RvPgBoD/QHqD1T+xjOgxkB/gPoDlb/xDKgx0B+g/kDlbzwDagz0B6g/UPkbz4AaA/0B6g9U/sYzoMZAf4D6A5W/8QyoMdAfoP5A5W88A2oM9AeoP1D5G8+AGgP9AeoPVP7G/wH4jVYp1zVScAAAAABJRU5ErkJggg==" | base64 -d > android-app/app/src/main/res/mipmap-mdpi/ic_launcher.png
-        
-        # Copier pour les autres résolutions
-        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher.png android-app/app/src/main/res/mipmap-hdpi/ic_launcher.png
-        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher.png android-app/app/src/main/res/mipmap-xhdpi/ic_launcher.png
-        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher.png android-app/app/src/main/res/mipmap-xxhdpi/ic_launcher.png
-        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher.png android-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png
-        
-        # Version ronde
         cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher.png android-app/app/src/main/res/mipmap-mdpi/ic_launcher_round.png
-        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher_round.png android-app/app/src/main/res/mipmap-hdpi/ic_launcher_round.png
-        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher_round.png android-app/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png
-        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher_round.png android-app/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png
-        cp android-app/app/src/main/res/mipmap-mdpi/ic_launcher_round.png android-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png
 
     - name: Build APK
       working-directory: ./android-app
