@@ -52,36 +52,36 @@ jobs:
     - name: Fix MainActivity and remove icons
       run: |
         # Créer un MainActivity simple et fonctionnel
-        cat > android-app/app/src/main/java/com/virtual/mg/MainActivity.kt << 'EOF'
-package com.virtual.mg
+        cat > android-app/app/src/main/java/com/virtual/mg/MainActivity.kt << "EOF"
+        package com.virtual.mg
 
-import android.os.Bundle
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.appcompat.app.AppCompatActivity
+        import android.os.Bundle
+        import android.webkit.WebView
+        import android.webkit.WebViewClient
+        import androidx.appcompat.app.AppCompatActivity
 
-class MainActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        val webView = WebView(this)
-        webView.settings.javaScriptEnabled = true
-        webView.webViewClient = WebViewClient()
-        webView.loadUrl("https://pred46.onrender.com")
-        
-        setContentView(webView)
-    }
-    
-    override fun onBackPressed() {
-        val webView = findViewById<WebView>(android.R.id.content).getRootView() as? WebView
-        if (webView?.canGoBack() == true) {
-            webView.goBack()
-        } else {
-            super.onBackPressed()
+        class MainActivity : AppCompatActivity() {
+            override fun onCreate(savedInstanceState: Bundle?) {
+                super.onCreate(savedInstanceState)
+                
+                val webView = WebView(this)
+                webView.settings.javaScriptEnabled = true
+                webView.webViewClient = WebViewClient()
+                webView.loadUrl("https://pred46.onrender.com")
+                
+                setContentView(webView)
+            }
+            
+            override fun onBackPressed() {
+                val webView = findViewById<WebView>(android.R.id.content).getRootView() as? WebView
+                if (webView?.canGoBack() == true) {
+                    webView.goBack()
+                } else {
+                    super.onBackPressed()
+                }
+            }
         }
-    }
-}
-EOF
+        EOF
 
         # Supprimer les références aux icônes manquantes
         sed -i 's/android:icon="@mipmap\/ic_launcher"//g' android-app/app/src/main/AndroidManifest.xml
