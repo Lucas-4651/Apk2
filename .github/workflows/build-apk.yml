@@ -31,7 +31,7 @@ jobs:
         echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android-app/keystore.properties
         echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android-app/keystore.properties
         echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android-app/keystore.properties
-        echo "storeFile=keystore.jks" >> android-app/keystore.properties
+        echo "storeFile=../keystore.jks" >> android-app/keystore.properties
 
     - name: Setup Gradle
       run: |
